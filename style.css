@@ -1,0 +1,60 @@
+:root{
+  --bg:#0b1220;
+  --panel:#0f1724;
+  --accent:#00d1ff;
+  --muted:#9aa6b2;
+  --cell-size:24px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  background:linear-gradient(180deg,#071021 0%, #0b1220 100%);
+  color:#e6eef6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+main{width:100%;max-width:900px}
+h1{text-align:center;margin-bottom:12px;font-size:28px;color:var(--accent)}
+.game{display:flex;gap:18px;align-items:flex-start;justify-content:center}
+canvas#board{
+  background:#071226;
+  border:6px solid #0f1724;
+  box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  image-rendering:pixelated;
+  width:calc(var(--cell-size) * 10);
+  height:calc(var(--cell-size) * 20);
+}
+
+.hud{display:flex;flex-direction:column;gap:12px;width:220px}
+.panel{
+  background:var(--panel);
+  padding:10px;
+  border-radius:8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.panel h2{font-size:14px;color:var(--muted);margin-bottom:6px}
+#next{background:#071226;border-radius:4px;display:block;margin:0 auto}
+#score,#level{font-size:20px;color:var(--accent);text-align:center}
+button#start{
+  width:100%;
+  padding:8px 10px;
+  border-radius:6px;
+  border:0;
+  background:linear-gradient(90deg,var(--accent),#6ef0ff);
+  color:#04202a;
+  font-weight:700;
+  cursor:pointer;
+}
+.small p{color:var(--muted);font-size:12px;margin-bottom:6px}
+.small ul{list-style:none;color:var(--muted);font-size:13px}
+footer{margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:720px){
+  .game{flex-direction:column;align-items:center}
+  .hud{width:100%}
+  canvas#board{width:240px;height:480px}
+}
