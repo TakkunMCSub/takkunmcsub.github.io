@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tetris</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Tetris</h1>
+    <section class="game">
+      <canvas id="board" width="240" height="480"></canvas>
+      <aside class="hud">
+        <div class="panel">
+          <h2>Next</h2>
+          <canvas id="next" width="80" height="80"></canvas>
+        </div>
+        <div class="panel">
+          <h2>Score</h2>
+          <div id="score">0</div>
+        </div>
+        <div class="panel">
+          <h2>Level</h2>
+          <div id="level">1</div>
+        </div>
+        <div class="panel">
+          <button id="start">Start / Restart</button>
+        </div>
+        <div class="panel small">
+          <p>Controls</p>
+          <ul>
+            <li>← → : Move</li>
+            <li>↑ : Rotate</li>
+            <li>↓ : Soft drop</li>
+            <li>Space : Hard drop</li>
+            <li>P : Pause</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+    <footer>
+      <small>Simple Tetris for GitHub Pages</small>
+    </footer>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
