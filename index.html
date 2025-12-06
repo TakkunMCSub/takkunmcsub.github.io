@@ -1,43 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Simple Tetris</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ゲームポータル</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<div class="container">
-
-    <!-- メイン画面 -->
-    <canvas id="tetris" width="240" height="480"></canvas>
-
-    <!-- サイド表示 -->
-    <div class="side">
-        <h2>次のブロック</h2>
-        <canvas id="next" width="120" height="120"></canvas>
-
-        <div class="info">
-            <p>レベル：<span id="level">1</span></p>
-            <p>ライン：<span id="lines">0</span></p>
-            <p>点数：<span id="score">0</span></p>
-        </div>
+  <header class="header" role="banner">
+    <div class="logo">
+      <div class="mark">G</div>
+      <div class="title">ゲームポータル</div>
     </div>
-</div>
+    <button class="login-btn" aria-label="ログイン">ログイン</button>
+  </header>
 
-<!-- ボタン類 -->
-<div class="controls">
-    <button onclick="rotate()">回転</button>
-    <div class="move-buttons">
-        <button onclick="move(-1)">←</button>
-        <button onclick="drop()">↓</button>
-        <button onclick="move(1)">→</button>
-    </div>
-    <button onclick="hardDrop()">落下</button>
-</div>
+  <main class="container" role="main">
+    <h1 class="hero-title">遊べるゲームを選んでください</h1>
+    <p class="hero-sub">シンプルで遊びやすいゲームを集めたポータルサイト</p>
 
-<button onclick="newGame()" class="ng">New Game</button>
+    <section class="cards" aria-label="ゲーム一覧">
+      <article class="card" data-game="2048" data-url="https://takkunlego0916.f5.si" role="button" tabindex="0">
+        <div class="game-title">2048</div>
+        <div class="game-desc">遊ぶ · ランキング · ルール</div>
+      </article>
 
-<script src="tetris.js"></script>
+      <article class="card" data-game="tetris" data-url="https://takkunmc.f5.si" role="button" tabindex="0">
+        <div class="game-title">テトリス</div>
+        <div class="game-desc">遊ぶ · ランキング · ルール</div>
+      </article>
+
+      <article class="card" data-game="othello" data-url="#" role="button" tabindex="0">
+        <div class="game-title">オセロ</div>
+        <div class="game-desc">遊ぶ · ランキング · ルール</div>
+      </article>
+    </section>
+
+    <p class="small-note">※ カードをクリックすると各ゲームページへ移動します</p>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
