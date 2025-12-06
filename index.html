@@ -3,44 +3,56 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Tetris</title>
+  <title>テトリス</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
-    <h1>Tetris</h1>
-    <section class="game">
-      <canvas id="board" width="240" height="480"></canvas>
-      <aside class="hud">
-        <div class="panel">
-          <h2>Next</h2>
-          <canvas id="next" width="80" height="80"></canvas>
+    <h1>テトリス</h1>
+
+    <section class="container">
+      <div class="play-area">
+        <div class="board-wrap">
+          <canvas id="board" width="240" height="480" aria-label="テトリス盤"></canvas>
+          <div class="controls">
+            <button class="ctl" id="left" aria-label="左">←</button>
+            <button class="ctl" id="right" aria-label="右">→</button>
+            <button class="ctl" id="down" aria-label="下">↓</button>
+            <button class="ctl" id="rotate" aria-label="回転">回転</button>
+            <button class="ctl" id="drop" aria-label="落下">落下</button>
+          </div>
+          <div class="bottom-actions">
+            <button id="pause">ポーズ</button>
+            <button id="newgame">New Game</button>
+          </div>
         </div>
-        <div class="panel">
-          <h2>Score</h2>
-          <div id="score">0</div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="panel next-panel">
+          <h2>次のブロック</h2>
+          <canvas id="next" width="80" height="80" aria-label="次のブロック"></canvas>
         </div>
-        <div class="panel">
-          <h2>Level</h2>
-          <div id="level">1</div>
-        </div>
-        <div class="panel">
-          <button id="start">Start / Restart</button>
-        </div>
-        <div class="panel small">
-          <p>Controls</p>
-          <ul>
-            <li>← → : Move</li>
-            <li>↑ : Rotate</li>
-            <li>↓ : Soft drop</li>
-            <li>Space : Hard drop</li>
-            <li>P : Pause</li>
-          </ul>
+
+        <div class="panel stats">
+          <div class="stat">
+            <div class="label">レベル</div>
+            <div class="value" id="level">1</div>
+          </div>
+          <div class="stat">
+            <div class="label">ライン</div>
+            <div class="value" id="lines">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">点数</div>
+            <div class="value" id="score">0</div>
+          </div>
         </div>
       </aside>
     </section>
+
     <footer>
-      <small>Simple Tetris for GitHub Pages</small>
+      <small>GitHub Pages 用シンプルテトリス</small>
     </footer>
   </main>
 
