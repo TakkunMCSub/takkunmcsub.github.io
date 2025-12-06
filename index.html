@@ -1,78 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tetris Game</title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Simple Tetris</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
 
-    <!-- 左：ゲーム画面 -->
-    <div class="left">
-      <div class="game-frame">
-        <canvas id="play" width="200" height="400"></canvas>
-      </div>
+<div class="container">
 
-      <!-- 操作ボタン -->
-      <div class="controls">
-        <div style="text-align:center">
-          <button class="btn green" id="btn-rotate">回転</button>
-        </div>
+    <!-- メイン画面 -->
+    <canvas id="tetris" width="240" height="480"></canvas>
 
-        <div class="row">
-          <div class="pad">
-            <div class="empty"></div>
-            <button id="btn-down">↓</button>
-            <div class="empty"></div>
-            <button id="btn-left">←</button>
-            <div class="empty"></div>
-            <button id="btn-right">→</button>
-            <div class="empty"></div>
-            <button class="empty"></button>
-            <div class="empty"></div>
-          </div>
-        </div>
-
-        <div style="text-align:center">
-          <button class="btn green" id="btn-drop">落下</button>
-        </div>
-
-        <div class="row">
-          <button class="btn blue" id="btn-pause">ポーズ</button>
-          <button class="btn red" id="btn-new">New Game</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右：情報パネル -->
-    <div class="right">
-      <div class="title">次のブロック</div>
-      <div class="next-box">
+    <!-- サイド表示 -->
+    <div class="side">
+        <h2>次のブロック</h2>
         <canvas id="next" width="120" height="120"></canvas>
-      </div>
 
-      <div class="stat">
-        <div>レベル</div>
-        <div class="num" id="level">1</div>
-      </div>
-
-      <div class="stat">
-        <div>ライン</div>
-        <div class="num" id="lines">0</div>
-      </div>
-
-      <div class="stat">
-        <div>点数</div>
-        <div class="num" id="score">0</div>
-      </div>
+        <div class="info">
+            <p>レベル：<span id="level">1</span></p>
+            <p>ライン：<span id="lines">0</span></p>
+            <p>点数：<span id="score">0</span></p>
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- JavaScript -->
-  <script src="tetris.js"></script>
+<!-- ボタン類 -->
+<div class="controls">
+    <button onclick="rotate()">回転</button>
+    <div class="move-buttons">
+        <button onclick="move(-1)">←</button>
+        <button onclick="drop()">↓</button>
+        <button onclick="move(1)">→</button>
+    </div>
+    <button onclick="hardDrop()">落下</button>
+</div>
+
+<button onclick="newGame()" class="ng">New Game</button>
+
+<script src="tetris.js"></script>
 </body>
 </html>
