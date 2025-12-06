@@ -1,168 +1,35 @@
-:root{
-  --bg:#1f1f1f;
-  --panel:#2a2a2a;
-  --accent:#7ad0ff;
-  --accent2:#8b5cf6;
-  --frame:#bfbfbf;
-  --btn-green:#5cb85c;
-  --btn-blue:#1e90ff;
-  --btn-red:#e57373;
-  --white:#f4f4f4;
-  font-family: "Helvetica Neue", Arial, sans-serif;
+body {
+    font-family: "Arial";
+    text-align: center;
+    background: #f4f4f4;
 }
 
-body{
-  margin:0;
-  padding:32px;
-  background:#fff;
-  color:#333;
-  display:flex;
-  justify-content:center;
+.container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-.container{
-  display:flex;
-  gap:32px;
-  align-items:flex-start;
-  max-width:980px;
-  width:100%;
+#tetris {
+    background: #111;
+    border: 10px solid #888;
 }
 
-/* ゲームエリア */
-.left{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:18px;
-  flex:1;
+.side {
+    margin-left: 20px;
 }
 
-.game-frame{
-  background:var(--frame);
-  padding:10px;
-  border-radius:4px;
+#next {
+    background: #111;
+    border: 5px solid #555;
 }
 
-canvas#play{
-  background:var(--bg);
-  display:block;
-  border-radius:2px;
-  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.25);
-  image-rendering: pixelated;
+.controls {
+    margin-top: 20px;
 }
 
-/* 操作コントロール */
-.controls{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:14px;
-  margin-top:10px;
-}
-
-.row{
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-
-.btn{
-  min-width:84px;
-  padding:12px 18px;
-  border-radius:10px;
-  border:none;
-  color:var(--white);
-  font-weight:600;
-  font-size:16px;
-  box-shadow:0 6px 0 rgba(0,0,0,0.12);
-  cursor:pointer;
-}
-
-.btn:active{
-  transform: translateY(2px);
-  box-shadow:none;
-}
-
-.green{ background:var(--btn-green); }
-.blue{ background:var(--btn-blue); }
-.red{ background:var(--btn-red); }
-
-/* 矢印ボタンエリア */
-.pad{
-  display:grid;
-  grid-template-columns: repeat(3,64px);
-  grid-template-rows: repeat(3,48px);
-  gap:8px;
-  justify-items:center;
-  align-items:center;
-}
-
-.pad button{
-  width:64px;height:48px;
-  border-radius:10px;
-  background:#03a9f4;
-  color:white;
-  border:none;
-  font-size:20px;
-  box-shadow:0 4px rgba(0,0,0,0.12);
-}
-
-.pad .empty{
-  background:transparent;
-  box-shadow:none;
-  pointer-events:none;
-}
-
-/* 右パネル */
-.right{
-  width:220px;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  align-items:center;
-}
-
-.next-box{
-  width:140px;
-  height:140px;
-  background:var(--panel);
-  border-radius:6px;
-  padding:12px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
-
-.stat{
-  text-align:center;
-  color:#666;
-}
-
-.stat .num{
-  font-size:22px;
-  color:#222;
-  font-weight:700;
-  margin-top:6px;
-}
-
-.title{
-  color:var(--accent2);
-  font-size:20px;
-  font-weight:700;
-  margin-bottom:6px;
-}
-
-/* レスポンシブ */
-@media(max-width:800px){
-  body{ padding:16px; }
-  .container{
-    flex-direction:column;
-    align-items:center;
-  }
-  .right{
-    width:100%;
-    flex-direction:row;
-    justify-content:space-between;
-  }
+.controls button, .ng {
+    font-size: 20px;
+    padding: 10px 25px;
+    margin: 5px;
 }
