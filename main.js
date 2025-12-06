@@ -1,9 +1,9 @@
-// Tetris for GitHub Pages — larger cells, white site background
+// Tetris — larger blocks (CELL = 40)
 'use strict';
 
 const COLS = 10;
 const ROWS = 20;
-const CELL = 30; // セルを30に拡大（index.html の canvas 属性と一致させること）
+const CELL = 40; // セルを40に拡大（index.html の canvas 属性と一致）
 const COLORS = [
   null,
   '#00f0f0', // I
@@ -28,11 +28,12 @@ const SHAPES = [
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
-// canvas.width / (COLS * CELL) で論理単位にスケール
+// 論理単位にスケール（1 unit = CELL）
 ctx.scale(canvas.width / (COLS * CELL), canvas.height / (ROWS * CELL));
 
 const nextCanvas = document.getElementById('next');
 const nctx = nextCanvas.getContext('2d');
+// next は 4x4 グリッドを想定
 nctx.scale(nextCanvas.width / (4 * CELL), nextCanvas.height / (4 * CELL));
 
 const scoreEl = document.getElementById('score');
