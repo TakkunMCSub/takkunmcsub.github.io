@@ -1,359 +1,362 @@
-// Tetris — larger blocks (CELL = 40)
-'use strict';
+/* ================================
+   Simple Tetris Game
+================================ */
 
 const COLS = 10;
 const ROWS = 20;
-const CELL = 40; // セルを40に拡大（index.html の canvas 属性と一致）
-const COLORS = [
-  null,
-  '#00f0f0', // I
-  '#0000f0', // J
-  '#f0a000', // L
-  '#f0f000', // O
-  '#00f000', // S
-  '#a000f0', // T
-  '#f00000'  // Z
-];
+const BLOCK = 20;
 
-const SHAPES = [
-  [],
-  [[1,1,1,1]], // I
-  [[2,0,0],[2,2,2]], // J
-  [[0,0,3],[3,3,3]], // L
-  [[4,4],[4,4]], // O
-  [[0,5,5],[5,5,0]], // S
-  [[0,6,0],[6,6,6]], // T
-  [[7,7,0],[0,7,7]]  // Z
-];
+const canvas = document.getElementById("play");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
 
-const canvas = document.getElementById('board');
-const ctx = canvas.getContext('2d');
-// 論理単位にスケール（1 unit = CELL）
-ctx.scale(canvas.width / (COLS * CELL), canvas.height / (ROWS * CELL));
+const nextCanvas = document.getElementById("next");
+const nctx = nextCanvas.getContext("2d");
+nctx.imageSmoothingEnabled = false;
 
-const nextCanvas = document.getElementById('next');
-const nctx = nextCanvas.getContext('2d');
-// next は 4x4 グリッドを想定
-nctx.scale(nextCanvas.width / (4 * CELL), nextCanvas.height / (4 * CELL));
-
-const scoreEl = document.getElementById('score');
-const levelEl = document.getElementById('level');
-const linesEl = document.getElementById('lines');
-
-const btnLeft = document.getElementById('left');
-const btnRight = document.getElementById('right');
-const btnDown = document.getElementById('down');
-const btnRotate = document.getElementById('rotate');
-const btnDrop = document.getElementById('drop');
-const btnPause = document.getElementById('pause');
-const btnNew = document.getElementById('newgame');
-
-let arena = createMatrix(COLS, ROWS);
-let dropCounter = 0;
-let dropInterval = 1000;
-let lastTime = 0;
-let gameOver = false;
-let paused = false;
-
-let player = {
-  pos: {x:0,y:0},
-  matrix: null,
-  next: null,
-  score: 0,
-  level: 1,
-  lines: 0
+// ピース定義
+const PIECES = {
+  I: { color: '#7ad0ff', shapes:[
+    [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]]
+  ]},
+  J: { color: '#3b82f6', shapes:[
+    [[1,0,0],[1,1,1],[0,0,0]],
+    [[0,1,1],[0,1,0],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,0,1]],
+    [[0,1,0],[0,1,0],[1,1,0]]
+  ]},
+  L: { color: '#f59e0b', shapes:[
+    [[0,0,1],[1,1,1],[0,0,0]],
+    [[0,1,0],[0,1,0],[0,1,1]],
+    [[0,0,0],[1,1,1],[1,0,0]],
+    [[1,1,0],[0,1,0],[0,1,0]]
+  ]},
+  O: { color: '#facc15', shapes:[
+    [[1,1],[1,1]]
+  ]},
+  S: { color: '#10b981', shapes:[
+    [[0,1,1],[1,1,0],[0,0,0]],
+    [[0,1,0],[0,1,1],[0,0,1]]
+  ]},
+  T: { color: '#8b5cf6', shapes:[
+    [[0,1,0],[1,1,1],[0,0,0]],
+    [[0,1,0],[0,1,1],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,1,0]],
+    [[0,1,0],[1,1,0],[0,1,0]]
+  ]},
+  Z: { color: '#ef4444', shapes:[
+    [[1,1,0],[0,1,1],[0,0,0]],
+    [[0,0,1],[0,1,1],[0,1,0]]
+  ]}
 };
 
-function createMatrix(w,h){
-  const m = [];
-  for(let y=0;y<h;y++){
-    m.push(new Array(w).fill(0));
-  }
-  return m;
+// 盤面
+function createMatrix(w, h){
+  return Array.from({length:h}, () => Array(w).fill(0));
 }
 
-function drawCell(x, y, colorIndex, context = ctx){
-  context.fillStyle = COLORS[colorIndex];
-  context.fillRect(x, y, 1, 1);
-  context.strokeStyle = '#071226';
-  context.lineWidth = 0.04;
-  context.strokeRect(x, y, 1, 1);
-}
+let board = createMatrix(COLS, ROWS);
 
-function drawMatrix(matrix, offset){
-  for(let y=0;y<matrix.length;y++){
-    for(let x=0;x<matrix[y].length;x++){
-      const val = matrix[y][x];
-      if(val){
-        drawCell(x + offset.x, y + offset.y, val, ctx);
+// ゲーム状態
+let current = null;
+let nextPiece = null;
+
+let dropInterval = 1000;
+let dropTimer = 0;
+let paused = false;
+
+let score = 0, lines = 0, level = 1;
+
+/* 7袋ランダム */
+function bagGenerator(){
+  const keys = Object.keys(PIECES);
+  let bag = [];
+  return function nextInBag(){
+    if(bag.length === 0){
+      bag = keys.slice();
+      for(let i=bag.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
       }
     }
-  }
+    return bag.pop();
+  };
+}
+const nextBag = bagGenerator();
+
+/* ピース生成 */
+function spawnPiece(name){
+  const def = PIECES[name];
+  const shape = def.shapes[0];
+
+  return {
+    name,
+    shapeIndex:0,
+    shapes:def.shapes,
+    matrix: JSON.parse(JSON.stringify(shape)),
+    x: Math.floor((COLS - shape[0].length) / 2),
+    y: 0,
+    color: def.color
+  };
 }
 
-function draw(){
-  ctx.fillStyle = '#071226';
-  ctx.fillRect(0,0,COLS,ROWS);
-  drawMatrix(arena, {x:0,y:0});
-  if(player.matrix){
-    drawMatrix(player.matrix, player.pos);
-  }
+/* ゲームリセット */
+function resetGame(){
+  board = createMatrix(COLS, ROWS);
+
+  score = 0;
+  lines = 0;
+  level = 1;
+  dropInterval = 1000;
+
+  current = spawnPiece(nextBag());
+  nextPiece = spawnPiece(nextBag());
+
+  updateStats();
+  draw();
+  drawNext();
+
+  paused = false;
 }
 
-function merge(arena, player){
-  player.matrix.forEach((row,y)=>{
-    row.forEach((val,x)=>{
-      if(val){
-        arena[y + player.pos.y][x + player.pos.x] = val;
-      }
-    });
-  });
-}
-
-function collide(arena, player){
-  const m = player.matrix;
-  const o = player.pos;
-  for(let y=0;y<m.length;y++){
-    for(let x=0;x<m[y].length;x++){
-      if(m[y][x] && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0){
-        return true;
+/* 衝突判定 */
+function collide(board, piece, offsetX=0, offsetY=0){
+  const m = piece.matrix;
+  for(let y=0; y<m.length; y++){
+    for(let x=0; x<m[y].length; x++){
+      if(m[y][x]){
+        const bx = piece.x + x + offsetX;
+        const by = piece.y + y + offsetY;
+        if(bx < 0 || bx >= COLS || by >= ROWS) return true;
+        if(by >= 0 && board[by][bx]) return true;
       }
     }
   }
   return false;
 }
 
-function rotate(matrix, dir){
-  for(let y=0;y<matrix.length;y++){
-    for(let x=0;x<y;x++){
-      [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+/* 固定 */
+function merge(board, piece){
+  const m = piece.matrix;
+  for(let y=0; y<m.length; y++){
+    for(let x=0; x<m[y].length; x++){
+      if(m[y][x]){
+        const bx = piece.x + x;
+        const by = piece.y + y;
+        if(by >= 0) board[by][bx] = piece.color;
+      }
     }
   }
-  if(dir > 0){
-    matrix.forEach(row => row.reverse());
+}
+
+/* 行消去 */
+function sweep(){
+  let count = 0;
+  for(let y=ROWS -1; y>=0; y--){
+    if(board[y].every(v => v)){
+      board.splice(y, 1);
+      board.unshift(Array(COLS).fill(0));
+      count++;
+      y++;
+    }
+  }
+
+  if(count > 0){
+    const base = [0,40,100,300,1200];
+    score += (base[count] || count*100) * level;
+    lines += count;
+
+    level = Math.floor(lines / 10) + 1;
+    dropInterval = Math.max(80, 1000 - (level-1)*100);
+
+    updateStats();
+  }
+}
+
+/* ピース交代 */
+function nextTurn(){
+  merge(board, current);
+  sweep();
+
+  current = nextPiece;
+  nextPiece = spawnPiece(nextBag());
+
+  if(collide(board, current)){
+    alert("Game Over");
+    resetGame();
+  }
+}
+
+/* 描画 */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let y=0; y<ROWS; y++){
+    for(let x=0; x<COLS; x++){
+      if(board[y][x]) drawBlock(ctx, x, y, board[y][x]);
+    }
+  }
+
+  if(current){
+    const m = current.matrix;
+    for(let y=0; y<m.length; y++){
+      for(let x=0; x<m[y].length; x++){
+        if(m[y][x]) drawBlock(ctx, current.x + x, current.y + y, current.color);
+      }
+    }
+  }
+}
+
+/* ブロック描画 */
+function drawBlock(c, gx, gy, color){
+  const x = gx * BLOCK;
+  const y = gy * BLOCK;
+
+  c.fillStyle = color;
+  c.fillRect(x+1, y+1, BLOCK-2, BLOCK-2);
+
+  c.fillStyle = "rgba(255,255,255,0.18)";
+  c.fillRect(x+2, y+2, BLOCK-4, (BLOCK-4)/3);
+
+  c.strokeStyle = "rgba(0,0,0,0.4)";
+  c.strokeRect(x+1, y+1, BLOCK-2, BLOCK-2);
+}
+
+/* 次ピース */
+function drawNext(){
+  nctx.clearRect(0,0,nextCanvas.width,nextCanvas.height);
+  nctx.fillStyle="#111";
+  nctx.fillRect(0,0,nextCanvas.width,nextCanvas.height);
+
+  const p = nextPiece;
+  if(!p) return;
+
+  const tile = 25;
+  for(let y=0; y<p.matrix.length; y++){
+    for(let x=0; x<p.matrix[y].length; x++){
+      if(p.matrix[y][x]){
+        nctx.fillStyle = p.color;
+        nctx.fillRect(20 + x*tile, 20 + y*tile, tile-4, tile-4);
+      }
+    }
+  }
+}
+
+/* ステータス更新 */
+function updateStats(){
+  document.getElementById("score").textContent = score;
+  document.getElementById("lines").textContent = lines;
+  document.getElementById("level").textContent = level;
+}
+
+/* 回転 */
+function rotatePiece(piece){
+  const nextIndex = (piece.shapeIndex + 1) % piece.shapes.length;
+  const next = piece.shapes[nextIndex];
+
+  // コピーして仮で回転
+  const backup = piece.matrix;
+  piece.matrix = JSON.parse(JSON.stringify(next));
+  piece.shapeIndex = nextIndex;
+
+  // 壁キック簡易
+  if(collide(board, piece)){
+    piece.x++;
+    if(collide(board, piece)){
+      piece.x -= 2;
+      if(collide(board, piece)){
+        piece.x++;
+        piece.matrix = backup;
+        piece.shapeIndex = (nextIndex - 1 + piece.shapes.length) % piece.shapes.length;
+      }
+    }
+  }
+}
+
+/* 操作 */
+function move(dx){
+  if(!collide(board, current, dx, 0)){
+    current.x += dx;
+    draw();
+  }
+}
+
+function softDrop(){
+  if(!collide(board, current, 0, 1)){
+    current.y++;
+    score++;
   } else {
-    matrix.reverse();
+    nextTurn();
   }
-}
-
-function playerRotate(dir){
-  const pos = player.pos.x;
-  let offset = 1;
-  rotate(player.matrix, dir);
-  while(collide(arena, player)){
-    player.pos.x += offset;
-    offset = -(offset + (offset > 0 ? 1 : -1));
-    if(Math.abs(offset) > player.matrix[0].length){
-      rotate(player.matrix, -dir);
-      player.pos.x = pos;
-      return;
-    }
-  }
-}
-
-function playerDrop(){
-  player.pos.y++;
-  if(collide(arena, player)){
-    player.pos.y--;
-    merge(arena, player);
-    sweep();
-    spawnPiece();
-  }
-  dropCounter = 0;
+  updateStats();
+  draw();
 }
 
 function hardDrop(){
-  while(!collide(arena, player)){
-    player.pos.y++;
+  let drop = 0;
+  while(!collide(board, current, 0, 1)){
+    current.y++;
+    drop++;
   }
-  player.pos.y--;
-  merge(arena, player);
-  sweep();
-  spawnPiece();
-  dropCounter = 0;
-}
-
-function sweep(){
-  let rowCount = 0;
-  outer: for(let y = arena.length -1; y >= 0; y--){
-    for(let x = 0; x < arena[y].length; x++){
-      if(arena[y][x] === 0){
-        continue outer;
-      }
-    }
-    const row = arena.splice(y,1)[0].fill(0);
-    arena.unshift(row);
-    y++;
-    rowCount++;
-  }
-  if(rowCount > 0){
-    const points = [0,40,100,300,1200];
-    player.score += points[rowCount] * player.level;
-    player.lines += rowCount;
-    if(player.lines >= player.level * 10){
-      player.level++;
-      dropInterval = Math.max(100, Math.floor(dropInterval * 0.85));
-    }
-    updateHUD();
-  }
-}
-
-function updateHUD(){
-  scoreEl.textContent = player.score;
-  levelEl.textContent = player.level;
-  linesEl.textContent = player.lines;
-}
-
-function randomPiece(){
-  const id = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
-  return SHAPES[id].map(row => row.slice());
-}
-
-function spawnPiece(){
-  player.matrix = player.next || randomPiece();
-  player.next = randomPiece();
-  player.pos.y = 0;
-  player.pos.x = Math.floor((COLS - player.matrix[0].length) / 2);
-  if(collide(arena, player)){
-    gameOver = true;
-    paused = true;
-    setTimeout(()=> alert('ゲームオーバー\n点数: ' + player.score), 50);
-  }
+  score += drop * 2;
+  updateStats();
+  nextTurn();
+  draw();
   drawNext();
 }
 
-function drawNext(){
-  nctx.fillStyle = '#071226';
-  nctx.fillRect(0,0,4,4);
-  const m = player.next;
-  if(!m) return;
-  const offset = {x: Math.floor((4 - m[0].length)/2), y: Math.floor((4 - m.length)/2)};
-  for(let y=0;y<m.length;y++){
-    for(let x=0;x<m[y].length;x++){
-      const val = m[y][x];
-      if(val){
-        nctx.fillStyle = COLORS[val];
-        nctx.fillRect(x + offset.x, y + offset.y, 1, 1);
-        nctx.strokeStyle = '#071226';
-        nctx.lineWidth = 0.04;
-        nctx.strokeRect(x + offset.x, y + offset.y, 1, 1);
-      }
-    }
-  }
-}
-
-function update(time = 0){
-  if(paused) return;
-  const delta = time - lastTime;
-  lastTime = time;
-  dropCounter += delta;
-  if(dropCounter > dropInterval){
-    player.pos.y++;
-    if(collide(arena, player)){
-      player.pos.y--;
-      merge(arena, player);
-      sweep();
-      spawnPiece();
-    }
-    dropCounter = 0;
-  }
-  draw();
-  requestAnimationFrame(update);
-}
-
-/* Keyboard controls */
-document.addEventListener('keydown', event => {
-  if(gameOver) return;
-  if(event.key === 'ArrowLeft'){
-    player.pos.x--;
-    if(collide(arena, player)) player.pos.x++;
-  } else if(event.key === 'ArrowRight'){
-    player.pos.x++;
-    if(collide(arena, player)) player.pos.x--;
-  } else if(event.key === 'ArrowDown'){
-    playerDrop();
-  } else if(event.key === 'ArrowUp'){
-    playerRotate(1);
-  } else if(event.code === 'Space'){
-    hardDrop();
-  } else if(event.key.toLowerCase() === 'p'){
-    togglePause();
-  }
+/* キーボード */
+document.addEventListener("keydown", e => {
+  if(e.key==="ArrowLeft"){ move(-1); }
+  else if(e.key==="ArrowRight"){ move(1); }
+  else if(e.key==="ArrowDown"){ softDrop(); }
+  else if(e.key==="ArrowUp" || e.key==="z"){ rotatePiece(current); draw(); }
+  else if(e.code==="Space"){ hardDrop(); }
+  else if(e.key==="p"){ togglePause(); }
 });
 
-/* Button / Touch controls */
-btnLeft.addEventListener('click', ()=> { if(!gameOver) { player.pos.x--; if(collide(arena, player)) player.pos.x++; draw(); }});
-btnRight.addEventListener('click', ()=> { if(!gameOver) { player.pos.x++; if(collide(arena, player)) player.pos.x--; draw(); }});
-btnDown.addEventListener('click', ()=> { if(!gameOver) playerDrop(); });
-btnRotate.addEventListener('click', ()=> { if(!gameOver) playerRotate(1); draw(); });
-btnDrop.addEventListener('click', ()=> { if(!gameOver) hardDrop(); });
-
-/* Long-press for continuous move (mobile usability) */
-function addHoldRepeat(button, onRepeat){
-  let timer = null;
-  let repeating = false;
-  const start = () => {
-    if(repeating) return;
-    onRepeat();
-    timer = setTimeout(function tick(){
-      onRepeat();
-      timer = setTimeout(tick, 120);
-    }, 300);
-    repeating = true;
-  };
-  const stop = () => {
-    clearTimeout(timer);
-    repeating = false;
-  };
-  button.addEventListener('touchstart', e => { e.preventDefault(); start(); });
-  button.addEventListener('mousedown', start);
-  button.addEventListener('touchend', stop);
-  button.addEventListener('mouseup', stop);
-  button.addEventListener('mouseleave', stop);
-}
-addHoldRepeat(btnLeft, ()=> { if(!gameOver){ player.pos.x--; if(collide(arena, player)) player.pos.x++; draw(); }});
-addHoldRepeat(btnRight, ()=> { if(!gameOver){ player.pos.x++; if(collide(arena, player)) player.pos.x--; draw(); }});
-addHoldRepeat(btnDown, ()=> { if(!gameOver) playerDrop(); });
-
-/* Pause and New Game */
-btnPause.addEventListener('click', togglePause);
-btnNew.addEventListener('click', startGame);
+/* ボタン操作 */
+document.getElementById("btn-left").onclick = () => move(-1);
+document.getElementById("btn-right").onclick = () => move(1);
+document.getElementById("btn-down").onclick = () => softDrop();
+document.getElementById("btn-rotate").onclick = () => { rotatePiece(current); draw(); };
+document.getElementById("btn-drop").onclick = () => hardDrop();
+document.getElementById("btn-pause").onclick = () => togglePause();
+document.getElementById("btn-new").onclick = () => { if(confirm("新しいゲームを開始しますか？")) resetGame(); };
 
 function togglePause(){
-  if(gameOver) return;
   paused = !paused;
-  btnPause.textContent = paused ? '再開' : 'ポーズ';
-  if(!paused){
-    lastTime = performance.now();
-    requestAnimationFrame(update);
+  document.getElementById("btn-pause").textContent = paused ? "再開" : "ポーズ";
+}
+
+/* メインループ */
+let last = 0;
+function update(time=0){
+  if(paused){ last = time; return requestAnimationFrame(update); }
+
+  const delta = time - last;
+  last = time;
+  dropTimer += delta;
+
+  if(dropTimer > dropInterval){
+    dropTimer = 0;
+
+    if(!collide(board, current, 0, 1)){
+      current.y++;
+    } else {
+      nextTurn();
+    }
+    draw();
+    drawNext();
   }
-}
 
-/* Game lifecycle */
-function reset(){
-  arena = createMatrix(COLS, ROWS);
-  player.score = 0;
-  player.level = 1;
-  player.lines = 0;
-  dropInterval = 1000;
-  gameOver = false;
-  paused = false;
-  updateHUD();
-}
-
-function startGame(){
-  reset();
-  player.next = randomPiece();
-  spawnPiece();
-  lastTime = performance.now();
   requestAnimationFrame(update);
 }
 
-/* Initialize */
-(function init(){
-  ctx.fillStyle = '#071226';
-  ctx.fillRect(0,0,COLS,ROWS);
-  nctx.fillStyle = '#071226';
-  nctx.fillRect(0,0,4,4);
-  updateHUD();
-})();
+/* 初期化 */
+resetGame();
+requestAnimationFrame(update);
