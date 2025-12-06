@@ -1,9 +1,9 @@
-// Tetris for GitHub Pages with touch buttons and Japanese UI
+// Tetris for GitHub Pages — larger cells, white site background
 'use strict';
 
 const COLS = 10;
 const ROWS = 20;
-const CELL = 24; // logical cell size for drawing (CSS scales canvas)
+const CELL = 30; // セルを30に拡大（index.html の canvas 属性と一致させること）
 const COLORS = [
   null,
   '#00f0f0', // I
@@ -28,7 +28,7 @@ const SHAPES = [
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
-// scale to logical grid units (1 unit = CELL)
+// canvas.width / (COLS * CELL) で論理単位にスケール
 ctx.scale(canvas.width / (COLS * CELL), canvas.height / (ROWS * CELL));
 
 const nextCanvas = document.getElementById('next');
@@ -71,16 +71,20 @@ function createMatrix(w,h){
   return m;
 }
 
+function drawCell(x, y, colorIndex, context = ctx){
+  context.fillStyle = COLORS[colorIndex];
+  context.fillRect(x, y, 1, 1);
+  context.strokeStyle = '#071226';
+  context.lineWidth = 0.04;
+  context.strokeRect(x, y, 1, 1);
+}
+
 function drawMatrix(matrix, offset){
   for(let y=0;y<matrix.length;y++){
     for(let x=0;x<matrix[y].length;x++){
       const val = matrix[y][x];
       if(val){
-        ctx.fillStyle = COLORS[val];
-        ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
-        ctx.strokeStyle = '#071226';
-        ctx.lineWidth = 0.04;
-        ctx.strokeRect(x + offset.x, y + offset.y, 1, 1);
+        drawCell(x + offset.x, y + offset.y, val, ctx);
       }
     }
   }
@@ -346,7 +350,6 @@ function startGame(){
 
 /* Initialize */
 (function init(){
-  // clear canvases
   ctx.fillStyle = '#071226';
   ctx.fillRect(0,0,COLS,ROWS);
   nctx.fillStyle = '#071226';
