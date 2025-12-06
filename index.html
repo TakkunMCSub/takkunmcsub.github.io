@@ -13,7 +13,8 @@
     <section class="container">
       <div class="play-area">
         <div class="board-wrap">
-          <canvas id="board" width="240" height="480" aria-label="テトリス盤"></canvas>
+          <!-- canvas の幅・高さは CELL * COLS / ROWS に合わせています -->
+          <canvas id="board" width="300" height="600" aria-label="テトリス盤"></canvas>
           <div class="controls">
             <button class="ctl" id="left" aria-label="左">←</button>
             <button class="ctl" id="right" aria-label="右">→</button>
@@ -31,7 +32,7 @@
       <aside class="sidebar">
         <div class="panel next-panel">
           <h2>次のブロック</h2>
-          <canvas id="next" width="80" height="80" aria-label="次のブロック"></canvas>
+          <canvas id="next" width="120" height="120" aria-label="次のブロック"></canvas>
         </div>
 
         <div class="panel stats">
