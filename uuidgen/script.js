@@ -14,6 +14,6 @@ document.getElementById('generateBtn').addEventListener('click', () => {
 document.getElementById('copyBtn').addEventListener('click', () => {
   const uuidText = document.getElementById('uuidOutput').textContent;
   navigator.clipboard.writeText(uuidText).then(() => {
-    alert("UUID copied to clipboard!");
+    alert("クリップボードにコピーされました");
   });
 });
