@@ -2,18 +2,32 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>UUID Generator</title>
+  <title>Open-Source UUID Generator</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>UUID Generator</h1>
-    <button id="generateBtn">Generate UUID</button>
+    <!-- 上部: バージョン切り替えボタン -->
+    <div class="version-buttons">
+      <button data-type="v1">UUID v1</button>
+      <button data-type="v4">UUID v4</button>
+      <button data-type="v7">UUID v7</button>
+      <button data-type="guid">GUID</button>
+    </div>
+
+    <!-- 中央タイトル -->
+    <h1>Open-Source UUID Generator</h1>
+
+    <!-- UUID表示＋コピー -->
     <div class="uuid-box">
       <p id="uuidOutput">ここにUUIDが表示されます</p>
       <button id="copyBtn">Copy</button>
     </div>
+
+    <!-- 新しく生成ボタン -->
+    <button id="generateBtn">新しく生成</button>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
