@@ -14,7 +14,7 @@ Use: https://utility.takkunlego0916.f5.si/passgen/
 
 HTML / CSS / JavaScript だけで動くシンプルで軽量なSite checkerです。完全にオープンソースでMIT Licenseなので学習用にも使えます
 
-Use: https://utility.takkunlego0916.f5.si/sitechecker/
+Use: https://utility.takkunlego0916.f5.si/sitecheck/
 
 # ライセンス(License)
 
