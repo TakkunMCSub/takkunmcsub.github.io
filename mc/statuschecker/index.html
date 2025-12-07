@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Minecraft Server Checker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Minecraft Server Checker</h1>
+    <input type="text" id="serverInput" placeholder="mc.example.com">
+    
+    <div class="settings">
+      <label><input type="radio" name="edition" value="java" checked> Java版</label>
+      <label><input type="radio" name="edition" value="bedrock"> 統合版</label>
+    </div>
+
+    <button id="checkBtn">Check Server</button>
+
+    <div class="result-box">
+      <img id="serverIcon" alt="Server Icon" style="display:none; width:64px; height:64px;">
+      <p id="serverName"></p>
+      <p id="serverDesc"></p>
+      <p id="serverVersion"></p>
+      <p id="serverPlayers"></p>
+      <p id="serverTPS"></p>
+      <p id="serverPing"></p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
