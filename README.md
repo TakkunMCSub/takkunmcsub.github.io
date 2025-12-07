@@ -1,31 +1,8 @@
-# Tetris Game
+# UUID Generator
 
-HTML / CSS / JavaScript だけで動く、シンプルで軽量な テトリスゲーム です。
-GitHub Pages でそのまま遊べて、学習用のサンプルとしても最適です。
+HTML / CSS / JavaScript だけで動く、シンプルで軽量なUUID Generatorです。完全にオープンソースでMIT Licenseなので学習用にも使えます
 
-Play Now!! : https://takkunmc.f5.si
-
-# ゲーム概要
-
-テトリスは世界的に有名なパズルゲームで、
-落ちてくる「テトロミノ」を積み上げないように揃えて消していくゲームです。
-
-ここでは
-
-	•	矢印キーで操作
-	•	スマホのスワイプ操作（オプション）
-	•	得点システムあり
-	•	Game Over 表示あり
-など、基本的なテトリス機能を再現しています。
-
-# 特徴
-	•	フレームワーク不使用（完全ネイティブ JS）
-	•	PC / スマホ対応
-	•	軽量で高速（数百 ms で起動）
-	•	スムーズなブロック落下アニメーション
-	•	回転・落下・ライン消去に対応
-	•	GitHub Pages でそのまま公開可能
-	•	学習に向いたシンプルな構造
+Use: https://utility.takkunlego0916.f5.si/uuidgen/
 
 # ライセンス(License)
 
