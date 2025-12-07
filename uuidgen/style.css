@@ -15,32 +15,37 @@ body {
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.5);
   text-align: center;
-  width: 400px;
+  width: 450px;
 }
 
-h1 {
+.version-buttons {
   margin-bottom: 20px;
-  font-size: 24px;
-  color: #00d4ff;
 }
 
-button {
+.version-buttons button {
+  margin: 5px;
   background: #00d4ff;
   border: none;
   color: #1f1f1f;
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 8px 14px;
+  font-size: 14px;
   border-radius: 6px;
   cursor: pointer;
   transition: 0.3s;
 }
 
-button:hover {
+.version-buttons button:hover {
   background: #00aacc;
 }
 
+h1 {
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: #00d4ff;
+}
+
 .uuid-box {
-  margin-top: 20px;
+  margin: 20px 0;
   background: #1f1f1f;
   padding: 15px;
   border-radius: 8px;
@@ -55,4 +60,19 @@ button:hover {
   word-break: break-all;
   margin: 0;
   color: #f5f5f5;
+}
+
+#copyBtn, #generateBtn {
+  background: #00d4ff;
+  border: none;
+  color: #1f1f1f;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#copyBtn:hover, #generateBtn:hover {
+  background: #00aacc;
 }
