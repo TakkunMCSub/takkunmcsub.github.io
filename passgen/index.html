@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Password Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Password Generator</h1>
+
+    <!-- 設定項目 -->
+    <div class="settings">
+      <label>長さ: <input type="number" id="length" value="12" min="6" max="64"></label>
+      <label><input type="checkbox" id="includeUpper" checked> 大文字</label>
+      <label><input type="checkbox" id="includeLower" checked> 小文字</label>
+      <label><input type="checkbox" id="includeNumbers" checked> 数字</label>
+      <label><input type="checkbox" id="includeSymbols"> 記号</label>
+    </div>
+
+    <!-- パスワード表示＋コピー -->
+    <div class="password-box">
+      <p id="passwordOutput">ここにパスワードが表示されます</p>
+      <button id="copyBtn">Copy</button>
+    </div>
+
+    <!-- 新しく生成ボタン -->
+    <button id="generateBtn">新しく生成</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
