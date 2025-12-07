@@ -9,10 +9,15 @@
   <div class="container">
     <h1>Minecraft Server Checker</h1>
     <input type="text" id="serverInput" placeholder="mc.example.com">
-    
+
     <div class="settings">
       <label><input type="radio" name="edition" value="java" checked> Java版</label>
       <label><input type="radio" name="edition" value="bedrock"> 統合版</label>
+    </div>
+
+    <!-- 統合版選択時のみ表示されるポート入力欄 -->
+    <div id="portBox" style="display:none;">
+      <label>ポート: <input type="number" id="portInput" value="19132" min="1" max="65535"></label>
     </div>
 
     <button id="checkBtn">Check Server</button>
