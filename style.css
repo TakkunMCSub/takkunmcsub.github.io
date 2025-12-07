@@ -35,6 +35,11 @@ p {
   box-shadow: 0 8px 20px rgba(0,0,0,0.5);
   width: 250px;
   text-align: center;
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 .card h2 {
@@ -45,6 +50,12 @@ p {
 .card p {
   color: #aaa;
   margin-bottom: 20px;
+}
+
+.icon {
+  font-size: 40px;
+  color: #00d4ff;
+  margin-bottom: 15px;
 }
 
 .btn {
