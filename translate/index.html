@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Translate Tool</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Translate Tool</h1>
+    <textarea id="inputText" placeholder="翻訳したいテキストを入力してください"></textarea>
+
+    <div class="settings">
+      <label for="targetLang">翻訳先言語:</label>
+      <select id="targetLang">
+        <option value="en">英語</option>
+        <option value="ja">日本語</option>
+        <option value="fr">フランス語</option>
+        <option value="de">ドイツ語</option>
+        <option value="es">スペイン語</option>
+        <option value="zh">中国語</option>
+      </select>
+    </div>
+
+    <button id="translateBtn">Translate</button>
+
+    <div class="result-box">
+      <p id="result">ここに翻訳結果が表示されます</p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
