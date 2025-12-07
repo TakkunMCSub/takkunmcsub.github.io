@@ -1,14 +1,24 @@
-async function checkServer(address, edition) {
-  // ここでは外部APIを利用する想定 (例: mcstatus.io, mcsrvstat.us)
+// Edition切り替えでポート入力欄を表示/非表示
+document.querySelectorAll('input[name="edition"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const portBox = document.getElementById("portBox");
+    if (radio.value === "bedrock" && radio.checked) {
+      portBox.style.display = "block";
+    } else if (radio.value === "java" && radio.checked) {
+      portBox.style.display = "none";
+    }
+  });
+});
+
+async function checkServer(address, edition, port) {
   const apiUrl = edition === "java"
     ? `https://api.mcsrvstat.us/2/${address}`
-    : `https://api.mcsrvstat.us/bedrock/${address}`;
+    : `https://api.mcsrvstat.us/bedrock/${address}:${port}`;
 
   try {
     const response = await fetch(apiUrl);
     const data = await response.json();
 
-    // サーバーアイコン
     if (data.icon) {
       const icon = document.getElementById("serverIcon");
       icon.src = data.icon;
@@ -31,9 +41,11 @@ async function checkServer(address, edition) {
 document.getElementById("checkBtn").addEventListener("click", () => {
   const address = document.getElementById("serverInput").value.trim();
   const edition = document.querySelector('input[name="edition"]:checked').value;
+  const port = edition === "bedrock" ? document.getElementById("portInput").value : null;
+
   if (!address) {
     alert("サーバーアドレスを入力してください");
     return;
   }
-  checkServer(address, edition);
+  checkServer(address, edition, port);
 });
