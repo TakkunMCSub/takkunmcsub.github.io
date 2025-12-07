@@ -4,6 +4,10 @@ HTML / CSS / JavaScript だけで動く、シンプルで軽量なUUID Generator
 
 Use: https://utility.takkunlego0916.f5.si/uuidgen/
 
+# Password Generator
+
+HTML / CSS / JavaScript だけで動く、シンプルで軽量なPassword Generatorです。完全にオープンソースでMIT Licenseなので学習用にも使えます
+
 # ライセンス(License)
 
 MIT License
