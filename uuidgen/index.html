@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>UUID Generator</title>
+
 <style>
+
 body{
 font-family:Arial;
 background:#0f172a;
@@ -12,16 +14,17 @@ text-align:center;
 padding:40px;
 }
 
+input{
+width:420px;
+padding:10px;
+}
+
 button{
 padding:10px 20px;
 margin:10px;
 cursor:pointer;
 }
 
-input{
-width:420px;
-padding:10px;
-}
 </style>
 </head>
 
@@ -39,10 +42,13 @@ padding:10px;
 <br><br>
 
 <button onclick="generate()">Generate</button>
+<button onclick="copyUUID()">Copy</button>
 
 <br><br>
 
 <input id="result" readonly>
+
+<p id="count">Length: 0</p>
 
 <script>
 
@@ -55,9 +61,12 @@ return crypto.randomUUID();
 }
 
 function uuidv7(){
+
 const t = Date.now().toString(16);
-const r = crypto.getRandomValues(new Uint8Array(10));
-return t + "-" + [...r].map(x=>x.toString(16).padStart(2,"0")).join("");
+const rand = crypto.getRandomValues(new Uint8Array(10));
+
+return t + "-" + [...rand].map(x=>x.toString(16).padStart(2,"0")).join("");
+
 }
 
 function guid(){
@@ -66,7 +75,7 @@ return crypto.randomUUID().toUpperCase();
 
 function generate(){
 
-const type=document.getElementById("version").value;
+let type=document.getElementById("version").value;
 let uuid="";
 
 if(type==="v4") uuid=uuidv4();
@@ -75,6 +84,15 @@ if(type==="v7") uuid=uuidv7();
 if(type==="guid") uuid=guid();
 
 document.getElementById("result").value=uuid;
+document.getElementById("count").innerText="Length: "+uuid.length;
+
+}
+
+function copyUUID(){
+
+let val=document.getElementById("result").value;
+
+navigator.clipboard.writeText(val);
 
 }
 
