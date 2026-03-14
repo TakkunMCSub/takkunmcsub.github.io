@@ -10,19 +10,22 @@
 
 <header>
 <h1>Utility Portal</h1>
-<p>Simple developer tools</p>
+<p>Developer Tools</p>
+
+<input id="search" placeholder="Search tools..." onkeyup="searchTools()">
+
 </header>
 
-<main class="tools">
+<main class="tools" id="toolList">
 
-<div class="card" onclick="openTool('uuidgen')">
+<div class="card" data-name="uuid generator guid v1 v4 v7" onclick="openTool('uuidgen')">
 <h2>UUID Generator</h2>
 <p>V1 / V4 / V7 / GUID</p>
 </div>
 
-<div class="card" onclick="openTool('passwordgen')">
+<div class="card" data-name="password generator security random" onclick="openTool('passwordgen')">
 <h2>Password Generator</h2>
-<p>Secure random password</p>
+<p>Secure password creator</p>
 </div>
 
 </main>
