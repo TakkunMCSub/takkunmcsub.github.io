@@ -1,5 +1,5 @@
 body{
-font-family: Arial, sans-serif;
+font-family:Arial;
 background:#0f172a;
 color:white;
 margin:0;
@@ -8,6 +8,12 @@ margin:0;
 header{
 text-align:center;
 padding:40px;
+}
+
+header input{
+padding:10px;
+width:260px;
+margin-top:10px;
 }
 
 .tools{
@@ -22,17 +28,12 @@ padding:40px;
 background:#1e293b;
 padding:30px;
 width:260px;
-border-radius:14px;
+border-radius:12px;
 cursor:pointer;
 transition:0.2s;
-box-shadow:0 10px 25px rgba(0,0,0,0.3);
 }
 
 .card:hover{
-transform:translateY(-6px);
 background:#334155;
-}
-
-.card h2{
-margin-top:0;
+transform:translateY(-5px);
 }
