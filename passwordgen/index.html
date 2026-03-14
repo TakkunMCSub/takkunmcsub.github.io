@@ -25,7 +25,12 @@ margin:10px;
 cursor:pointer;
 }
 
+.options{
+margin:15px;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -35,34 +40,83 @@ cursor:pointer;
 <label>Length</label>
 <input id="length" type="number" value="16">
 
-<br>
+<div class="options">
+
+<label><input type="checkbox" id="upper" checked>Uppercase</label>
+<label><input type="checkbox" id="lower" checked>Lowercase</label>
+<label><input type="checkbox" id="number" checked>Numbers</label>
+<label><input type="checkbox" id="symbol">Symbols</label>
+
+</div>
 
 <button onclick="generate()">Generate</button>
+<button onclick="copy()">Copy</button>
 
-<br>
+<br><br>
 
 <input id="result" readonly>
+
+<p id="count">Length: 0</p>
+<p id="strength">Strength: -</p>
 
 <script>
 
 function generate(){
 
-const chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
-"abcdefghijklmnopqrstuvwxyz"+
-"0123456789"+
-"!@#$%^&*()_+";
+let chars="";
+
+if(document.getElementById("upper").checked)
+chars+="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+if(document.getElementById("lower").checked)
+chars+="abcdefghijklmnopqrstuvwxyz";
+
+if(document.getElementById("number").checked)
+chars+="0123456789";
+
+if(document.getElementById("symbol").checked)
+chars+="!@#$%^&*()_+";
 
 let len=document.getElementById("length").value;
 
 let pass="";
 
 for(let i=0;i<len;i++){
-pass += chars[Math.floor(Math.random()*chars.length)];
+pass+=chars[Math.floor(Math.random()*chars.length)];
 }
 
 document.getElementById("result").value=pass;
 
+document.getElementById("count").innerText="Length: "+pass.length;
+
+checkStrength(pass);
+
+}
+
+function checkStrength(p){
+
+let score=0;
+
+if(p.match(/[A-Z]/)) score++;
+if(p.match(/[a-z]/)) score++;
+if(p.match(/[0-9]/)) score++;
+if(p.match(/[^A-Za-z0-9]/)) score++;
+if(p.length>=12) score++;
+
+let strength="Weak";
+
+if(score>=3) strength="Medium";
+if(score>=4) strength="Strong";
+if(score>=5) strength="Very Strong";
+
+document.getElementById("strength").innerText="Strength: "+strength;
+
+}
+
+function copy(){
+navigator.clipboard.writeText(
+document.getElementById("result").value
+);
 }
 
 </script>
