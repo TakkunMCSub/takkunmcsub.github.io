@@ -101,25 +101,109 @@ function tokenizeText(text, langHint){
 function detectModeAuto(text){
   const codeSignals = [
     /[{}[\];]/.test(text),
-    /\b(function|const|let|var|class|import|export|return|if|else|for|while|def|print|console|public|private|static)\b/.test(text),
+    /\b(function|const|let|var|class|import|export|return|if|else|for|while|def|print|console|public|private|static|async|await)\b/.test(text),
     /\n\s{2,}\S/.test(text),
     /=>|==|===|!=|<=|>=|&&|\|\|/.test(text)
   ].filter(Boolean).length;
 
   return codeSignals >= 2 ? "code" : "text";
 }
-function verdictFromScore(score){
-  if(score >= 75) return {
-    title: "AIっぽい可能性が高い",
-    text: "文体や構造がかなり整っており、反復や規則性が目立ちます。"
+
+function verdictFromScore(score, chattyScore = 0){
+  if(score >= 78) return {
+    title: "AIっぽい可能性がかなり高い",
+    text: "文体の均一さ、反復、定型化が強めです。"
   };
-  if(score >= 45) return {
+  if(score >= 55) return {
     title: "判定が分かれやすい",
-    text: "AIにも人間にも見える特徴が混在しています。別の視点でも確認すると良いです。"
+    text: "AIっぽい特徴と、人間っぽい揺れが混在しています。"
+  };
+  if(chattyScore >= 68) return {
+    title: "会話・投稿文っぽい",
+    text: "AI断定というより、SNS的な「チャッピー構文」に近い印象です。"
   };
   return {
     title: "人間っぽい可能性が高い",
     text: "ばらつきや個性があり、機械的な規則性は強くありません。"
+  };
+}
+
+function scoreChattyStyle(text){
+  const lines = text.split("\n").map(s => s.trim()).filter(Boolean);
+  const norm = normalizeText(text);
+
+  const openerPatterns = [
+    /結論から(言う|いう)(と|ね)?/g,
+    /先に結論/g,
+    /ズバリ/g,
+    /端的に言うと/g,
+    /一言でいうと/g,
+    /まず結論/g
+  ];
+  const certaintyPatterns = [
+    /めっちゃ/g, /かなり/g, /絶対/g, /実は/g, /ありえない/g, /おかしい/g,
+    /〜じゃない[？?]/g, /なんて/g, /だから/g, /つまり/g, /のような/g
+  ];
+  const contrastPatterns = [
+    /❌|⭕️|→|⇒|=>/g,
+    /A判定|B判定|合格|不合格|ミス|補欠/g,
+    /〜ではなく/g,
+    /〜なのに/g
+  ];
+  const emojiCount = (norm.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).length;
+  const bullets = (text.match(/^\s*(?:[•\-*]|☑️|👉|▶|◆|・)\s+/gm) || []).length;
+  const exclaim = (norm.match(/[！!]/g) || []).length;
+  const question = (norm.match(/[？?]/g) || []).length;
+  const assertion = (norm.match(/(〜|～).*(❌|⭕️|→|だから|実は|結論)/g) || []).length;
+  const lineLead = lines.filter(l => /^(結論|理由|だから|まず|次に|最後に|補足|要するに|つまり|👉|☑️|•|・)/.test(l)).length;
+
+  const opener = openerPatterns.reduce((n, re) => n + (norm.match(re) || []).length, 0);
+  const certainty = certaintyPatterns.reduce((n, re) => n + (norm.match(re) || []).length, 0);
+  const contrast = contrastPatterns.reduce((n, re) => n + (norm.match(re) || []).length, 0);
+
+  const sentenceCount = splitSentences(norm).length || 1;
+  const shortSentenceRate = splitSentences(norm).filter(s => s.length <= 24).length / sentenceCount;
+  const bulletDensity = bullets / Math.max(lines.length, 1);
+
+  const score = clamp(
+    10 +
+    opener * 18 +
+    certainty * 4 +
+    contrast * 12 +
+    bulletDensity * 30 +
+    emojiCount * 6 +
+    exclaim * 1.8 +
+    question * 1.2 +
+    lineLead * 7 +
+    shortSentenceRate * 12 +
+    assertion * 10,
+    0,
+    100
+  );
+
+  const signals = [
+    {label:"結論先出し", value:pct(clamp(opener * 18, 0, 100)), detail:"「結論から言うと」系の強さ", type: opener >= 1 ? "bad" : "good"},
+    {label:"箇条書き密度", value:pct(clamp(bulletDensity * 100, 0, 100)), detail:"SNS・投稿文っぽさの強い要素", type: bullets >= 2 ? "bad" : bullets >= 1 ? "warn" : "good"},
+    {label:"感情・断定語", value:pct(clamp(certainty * 6, 0, 100)), detail:"「めっちゃ」「ありえない」「おかしい」など", type: certainty >= 3 ? "bad" : certainty >= 1 ? "warn" : "good"},
+    {label:"対比の強さ", value:pct(clamp(contrast * 10, 0, 100)), detail:"「A→B」「❌/⭕️」のような押し出し", type: contrast >= 2 ? "bad" : contrast >= 1 ? "warn" : "good"},
+    {label:"短文率", value:pct(shortSentenceRate * 100), detail:"短い文の連打は会話調・投稿調に寄りやすい", type: shortSentenceRate > 0.7 ? "warn" : "good"},
+  ];
+
+  return {
+    score,
+    signals,
+    chips: [
+      score >= 70 ? {text:"チャッピー構文 強め", cls:"bad"} :
+      score >= 40 ? {text:"チャッピー構文 中程度", cls:"warn"} :
+      {text:"チャッピー構文 弱め", cls:"good"}
+    ],
+    tips: [
+      opener >= 1 ? "冒頭の「結論から言うと」を少し弱めると、押しの強さが下がります。" : null,
+      bullets >= 2 ? "箇条書きを減らして、文章でつなぐと自然さが増します。" : null,
+      certainty >= 3 ? "断定語を少し減らすと、宣言っぽさが弱まります。" : null,
+      contrast >= 2 ? "❌/⭕️ や A→B の対比を減らすと、投稿文感が下がります。" : null,
+      "必要なら、事実→理由→補足の順に整えると安定します。"
+    ].filter(Boolean)
   };
 }
 
@@ -165,7 +249,13 @@ function analyzeText(text, langHint){
   const transitionCount = (norm.match(/(つまり|そのため|一方で|しかし|さらに|なお|例えば|まず|次に|最後に|therefore|however|moreover|for example)/gi) || []).length;
   const transitionDensity = wordsLower.length ? transitionCount / wordsLower.length : 0;
 
-  const score = clamp(
+  const rhetoricalMarkers = (norm.match(/(〜|～).*(と思う|感じる|かも|っぽい|です|ます)/g) || []).length;
+  const assertiveMarkers = (norm.match(/(絶対|明らか|確実|間違いない|ありえない|おかしい|実は|結局)/g) || []).length;
+
+  const chatty = scoreChattyStyle(text);
+  const chattyScore = chatty.score;
+
+  const aiBase = clamp(
     12 +
     sentenceUniformity * 18 +
     rep3 * 14 +
@@ -177,8 +267,17 @@ function analyzeText(text, langHint){
     paragraphUniformity * 4 +
     clamp((shortSentRatio - 0.35) * 18, 0, 8) +
     clamp(transitionDensity * 120, 0, 6) +
-    clamp((rep2 - 0.08) * 30, 0, 6),
-    0, 100
+    clamp((rep2 - 0.08) * 30, 0, 6) +
+    clamp(assertiveMarkers * 2.5, 0, 6) -
+    clamp(chattyScore * 0.06, 0, 5),
+    0,
+    100
+  );
+
+  const finalScore = clamp(
+    aiBase * 0.72 + chattyScore * 0.28,
+    0,
+    100
   );
 
   const signals = [
@@ -188,6 +287,7 @@ function analyzeText(text, langHint){
     {label:"文の重複", value:pct(repeatedSent * 100), detail:"似た文が繰り返される割合", type: repeatedSent > 0.12 ? "bad" : repeatedSent > 0.05 ? "warn" : "good"},
     {label:"語彙の多様性", value:pct(uniq * 100), detail:"高いほど単語の偏りが少ない", type: uniq < 0.38 ? "bad" : uniq < 0.5 ? "warn" : "good"},
     {label:"情報密度(エントロピー)", value:ent.toFixed(2), detail:"低いほど表現の種類が少ない", type: ent < 3.6 ? "bad" : ent < 4.4 ? "warn" : "good"},
+    {label:"チャッピー構文", value:pct(chattyScore), detail:"結論先出し・箇条書き・断定の押し出しを別判定", type: chattyScore >= 70 ? "bad" : chattyScore >= 40 ? "warn" : "good"},
   ];
 
   const tips = [];
@@ -196,18 +296,26 @@ function analyzeText(text, langHint){
   if(uniq < 0.45) tips.push("同義語や具体例を増やして、語彙の偏りを減らしてください。");
   if(repeatedSent > 0.05) tips.push("似た内容の文を統合すると、冗長さが減ります。");
   if(transitionDensity > 0.02) tips.push("接続詞が多い場合は、つなぎを少し減らすと自然になります。");
+  if(rhetoricalMarkers > 0 && assertiveMarkers > 1) tips.push("丁寧語と断定語が混ざると不自然に見えるので、語調を揃えると安定します。");
+  if(chattyScore >= 40) tips.push("「結論→理由→補足」に整えつつ、箇条書きを減らすとチャッピー構文感が下がります。");
+
   if(tips.length === 0) tips.push("自然な揺れは十分あります。必要なら、もっと個性的な語尾や具体的な体験を加えると変化が出ます。");
 
   const chips = [
-    score >= 70 ? {text:"AIっぽさ高め", cls:"bad"} : score >= 45 ? {text:"判定が揺れやすい", cls:"warn"} : {text:"人間っぽさ高め", cls:"good"},
+    finalScore >= 70 ? {text:"AIっぽさ高め", cls:"bad"} :
+    finalScore >= 45 ? {text:"判定が揺れやすい", cls:"warn"} :
+    {text:"人間っぽさ高め", cls:"good"},
+    chattyScore >= 60 ? {text:"チャッピー構文あり", cls:"warn"} : {text:"チャッピー構文弱め", cls:"good"},
     {text:`文章数 ${sentences.length}`, cls:""},
     {text:`単語数 ${wordsLower.length}`, cls:""},
   ];
 
   return {
-    score,
-    verdict: verdictFromScore(score),
+    score: finalScore,
+    verdict: verdictFromScore(finalScore, chattyScore),
     stats: [
+      ["AI基礎スコア", `${aiBase.toFixed(1)} / 100`],
+      ["チャッピー構文", `${chattyScore.toFixed(1)} / 100`],
       ["平均文長", `${avgSentence.toFixed(1)} 文字`],
       ["文長のばらつき", sentenceVar.toFixed(1)],
       ["語彙多様性", pct(uniq * 100)],
@@ -227,7 +335,7 @@ function normalizeCodeLine(line){
     .replace(/#.*$/g, "")
     .replace(/\/\*.*?\*\//g, "")
     .replace(/\s+/g, " ")
-    .replace(/\b[A-Za-z_][A-Za-z0-9_]*\b/g, "իդ");
+    .replace(/\b[A-Za-z_][A-Za-z0-9_]*\b/g, "ID");
 }
 
 function analyzeCode(text){
@@ -271,7 +379,8 @@ function analyzeCode(text){
     clamp((0.28 - avgLength / 220) * 10, 0, 6) +
     clamp(functionCount / Math.max(nonEmpty.length / 8, 1), 0, 6) +
     clamp(deepNestingSignals * 8, 0, 6),
-    0, 100
+    0,
+    100
   );
 
   const signals = [
@@ -318,37 +427,30 @@ function render(result){
   els.scoreNum.textContent = score;
   els.scoreRing.style.background =
     `conic-gradient(var(--accent) 0deg, var(--accent2) ${score * 3.6}deg, rgba(255,255,255,.08) ${score * 3.6}deg)`;
+
   els.verdictTitle.textContent = result.verdict.title;
   els.verdictText.textContent = result.verdict.text;
 
-  els.summaryChips.innerHTML = result.chips
-    .map(c => `<span class="chip ${c.cls || ""}">${c.text}</span>`)
-    .join("");
+  els.summaryChips.innerHTML = result.chips.map(c => `<span class="chip ${c.cls || ""}">${c.text}</span>`).join("");
 
-  els.stats.innerHTML = result.stats
-    .map(([k,v]) => `
-      <div class="stat">
-        <div class="k">${k}</div>
-        <div class="v">${v}</div>
+  els.stats.innerHTML = result.stats.map(([k,v]) => `
+    <div class="stat">
+      <div class="k">${k}</div>
+      <div class="v">${v}</div>
+    </div>
+  `).join("");
+
+  els.signals.innerHTML = result.signals.map(item => `
+    <li>
+      <div>
+        <strong>${item.label}</strong><br>
+        <small>${item.detail}</small>
       </div>
-    `)
-    .join("");
+      <span class="chip ${item.type}">${item.value}</span>
+    </li>
+  `).join("");
 
-  els.signals.innerHTML = result.signals
-    .map(item => `
-      <li>
-        <div>
-          <strong>${item.label}</strong><br>
-          <small>${item.detail}</small>
-        </div>
-        <span class="chip ${item.type}">${item.value}</span>
-      </li>
-    `)
-    .join("");
-
-  els.tips.innerHTML = result.tips
-    .map(t => `<li><div>${t}</div></li>`)
-    .join("");
+  els.tips.innerHTML = result.tips.map(t => `<li><div>${t}</div></li>`).join("");
 }
 
 function analyze(){
@@ -380,7 +482,6 @@ function setTheme(theme){
   state.theme = theme;
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("ai-checker-theme", theme);
-
   const isDark = theme === "dark";
   els.themeIcon.textContent = isDark ? "🌙" : "☀️";
   els.themeText.textContent = isDark ? "Dark" : "Light";
@@ -412,7 +513,6 @@ els.fileInput.addEventListener("change", async (e) => {
     els.dropZone.style.background = "rgba(124,240,198,.10)";
   });
 });
-
 ["dragleave","drop"].forEach(evt => {
   els.dropZone.addEventListener(evt, (e) => {
     e.preventDefault();
