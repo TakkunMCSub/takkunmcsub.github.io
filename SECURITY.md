@@ -1,21 +1,11 @@
 # Security Policy
 
-## Supported Versions
+## サポート対象
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+このリポジトリで公開している最新バージョンをサポート対象とします。
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## 脆弱性の報告
 
-## Reporting a Vulnerability
+脆弱性を発見した場合は、再現手順や影響範囲を添えて管理者へ非公開で連絡してください。パスワード、個人情報、第三者のデータなどを公開Issueへ投稿しないでください。
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+GitHubの非公開セキュリティアドバイザリ機能が利用できる場合は、そちらからの報告を推奨します。

@@ -1,12 +1,21 @@
+function readSavedTheme(){
+  try {
+    const theme = localStorage.getItem("utility-theme");
+    return theme === "dark" || theme === "light" ? theme : "light";
+  } catch {
+    return "light";
+  }
+}
+
 const state = {
   mode: "auto",
-  theme: localStorage.getItem("ai-checker-theme") || "dark"
+  theme: readSavedTheme()
 };
 
 const els = {
   input: document.getElementById("input"),
-  scoreRing: document.getElementById("scoreRing"),
   scoreNum: document.getElementById("scoreNum"),
+  scoreTrack: document.getElementById("scoreTrack"),
   verdictTitle: document.getElementById("verdictTitle"),
   verdictText: document.getElementById("verdictText"),
   summaryChips: document.getElementById("summaryChips"),
@@ -21,13 +30,12 @@ const els = {
   languageHint: document.getElementById("languageHint"),
   tabs: [...document.querySelectorAll(".tab")],
   themeToggle: document.getElementById("themeToggle"),
-  themeIcon: document.getElementById("themeIcon"),
   themeText: document.getElementById("themeText")
 };
 
-const textSample = `最近のAIは文章をとても自然に書けるようになりました。
-一方で、似たような言い回しが続いたり、段落ごとのリズムが均一になったりすることがあります。
-このツールは、そうした特徴を手がかりにして、AIっぽさを推定します。`;
+const textSample = `先週、駅前に新しい店ができたので立ち寄ってみました。
+店内は思ったより落ち着いていて、待ち時間も短かったです。
+次は別のメニューも試してみようと思います。`;
 
 const codeSample = `function analyzeText(input) {
   const lines = input.split("\\n");
@@ -89,10 +97,13 @@ function splitSentences(text){
 function tokenizeText(text, langHint){
   if (window.Intl && Intl.Segmenter && langHint !== "mixed") {
     try{
-      const segmenter = new Intl.Segmenter(langHint === "ja" ? "ja" : "en", { granularity: "word" });
+      const hasJapanese = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text);
+      const language = langHint === "ja" ? "ja" : langHint === "en" ? "en" : hasJapanese ? "ja" : "en";
+      const segmenter = new Intl.Segmenter(language, { granularity: "word" });
       return Array.from(segmenter.segment(text))
+        .filter(x => x.isWordLike)
         .map(x => x.segment.trim())
-        .filter(tok => tok && /[\p{L}\p{N}]/u.test(tok));
+        .filter(Boolean);
     }catch(e){}
   }
   const words = text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+|[A-Za-z0-9_]+/gu);
@@ -111,20 +122,20 @@ function detectModeAuto(text){
 
 function verdictFromScore(score, chattyScore = 0){
   if(score >= 78) return {
-    title: "AIっぽい可能性がかなり高い",
-    text: "文体の均一さ、反復、定型化が強めです。"
+    title: "規則的な特徴が多く見られます",
+    text: "文体の均一さ、反復、定型的な表現が比較的多く見られます。"
   };
   if(score >= 55) return {
-    title: "判定が分かれやすい",
-    text: "AIっぽい特徴と、人間っぽい揺れが混在しています。"
+    title: "複数の特徴が混在しています",
+    text: "規則的な部分と、ばらつきのある部分の両方が見られます。"
   };
   if(chattyScore >= 68) return {
-    title: "会話・投稿文っぽい",
-    text: "AI断定というより、SNS的な「チャッピー構文」に近い印象です。"
+    title: "会話・投稿文の傾向があります",
+    text: "短文や箇条書き、強い言い回しが比較的多く見られます。"
   };
   return {
-    title: "人間っぽい可能性が高い",
-    text: "ばらつきや個性があり、機械的な規則性は強くありません。"
+    title: "文体にばらつきがあります",
+    text: "文章の長さや表現に変化があり、規則性は比較的強くありません。"
   };
 }
 
@@ -193,9 +204,9 @@ function scoreChattyStyle(text){
     score,
     signals,
     chips: [
-      score >= 70 ? {text:"チャッピー構文 強め", cls:"bad"} :
-      score >= 40 ? {text:"チャッピー構文 中程度", cls:"warn"} :
-      {text:"チャッピー構文 弱め", cls:"good"}
+      score >= 70 ? {text:"投稿文の特徴 強め", cls:"bad"} :
+      score >= 40 ? {text:"投稿文の特徴 中程度", cls:"warn"} :
+      {text:"投稿文の特徴 弱め", cls:"good"}
     ],
     tips: [
       opener >= 1 ? "冒頭の「結論から言うと」を少し弱めると、押しの強さが下がります。" : null,
@@ -281,13 +292,13 @@ function analyzeText(text, langHint){
   );
 
   const signals = [
-    {label:"文の長さの均一さ", value:pct(sentenceUniformity * 100), detail:"AI文に多い規則性", type: sentenceUniformity > 0.65 ? "bad" : sentenceUniformity > 0.4 ? "warn" : "good"},
+    {label:"文の長さの均一さ", value:pct(sentenceUniformity * 100), detail:"文の長さが一定に近い場合に上がる", type: sentenceUniformity > 0.65 ? "bad" : sentenceUniformity > 0.4 ? "warn" : "good"},
     {label:"2語連続の反復", value:pct(rep2 * 100), detail:"定型表現の連続を確認", type: rep2 > 0.18 ? "bad" : rep2 > 0.09 ? "warn" : "good"},
     {label:"3語連続の反復", value:pct(rep3 * 100), detail:"同じ言い回しが続くと上昇", type: rep3 > 0.16 ? "bad" : rep3 > 0.08 ? "warn" : "good"},
     {label:"文の重複", value:pct(repeatedSent * 100), detail:"似た文が繰り返される割合", type: repeatedSent > 0.12 ? "bad" : repeatedSent > 0.05 ? "warn" : "good"},
     {label:"語彙の多様性", value:pct(uniq * 100), detail:"高いほど単語の偏りが少ない", type: uniq < 0.38 ? "bad" : uniq < 0.5 ? "warn" : "good"},
     {label:"情報密度(エントロピー)", value:ent.toFixed(2), detail:"低いほど表現の種類が少ない", type: ent < 3.6 ? "bad" : ent < 4.4 ? "warn" : "good"},
-    {label:"チャッピー構文", value:pct(chattyScore), detail:"結論先出し・箇条書き・断定の押し出しを別判定", type: chattyScore >= 70 ? "bad" : chattyScore >= 40 ? "warn" : "good"},
+    {label:"投稿文の特徴", value:pct(chattyScore), detail:"結論先出し・箇条書き・断定の押し出しを別判定", type: chattyScore >= 70 ? "bad" : chattyScore >= 40 ? "warn" : "good"},
   ];
 
   const tips = [];
@@ -297,15 +308,15 @@ function analyzeText(text, langHint){
   if(repeatedSent > 0.05) tips.push("似た内容の文を統合すると、冗長さが減ります。");
   if(transitionDensity > 0.02) tips.push("接続詞が多い場合は、つなぎを少し減らすと自然になります。");
   if(rhetoricalMarkers > 0 && assertiveMarkers > 1) tips.push("丁寧語と断定語が混ざると不自然に見えるので、語調を揃えると安定します。");
-  if(chattyScore >= 40) tips.push("「結論→理由→補足」に整えつつ、箇条書きを減らすとチャッピー構文感が下がります。");
+  if(chattyScore >= 40) tips.push("「結論→理由→補足」に整えつつ、箇条書きを減らすと投稿文のような押し出しが弱まります。");
 
   if(tips.length === 0) tips.push("自然な揺れは十分あります。必要なら、もっと個性的な語尾や具体的な体験を加えると変化が出ます。");
 
   const chips = [
-    finalScore >= 70 ? {text:"AIっぽさ高め", cls:"bad"} :
-    finalScore >= 45 ? {text:"判定が揺れやすい", cls:"warn"} :
-    {text:"人間っぽさ高め", cls:"good"},
-    chattyScore >= 60 ? {text:"チャッピー構文あり", cls:"warn"} : {text:"チャッピー構文弱め", cls:"good"},
+    finalScore >= 70 ? {text:"規則性が高め", cls:"bad"} :
+    finalScore >= 45 ? {text:"特徴が混在", cls:"warn"} :
+    {text:"ばらつきが多め", cls:"good"},
+    chattyScore >= 60 ? {text:"会話調の特徴あり", cls:"warn"} : {text:"会話調の特徴は少なめ", cls:"good"},
     {text:`文章数 ${sentences.length}`, cls:""},
     {text:`単語数 ${wordsLower.length}`, cls:""},
   ];
@@ -314,8 +325,8 @@ function analyzeText(text, langHint){
     score: finalScore,
     verdict: verdictFromScore(finalScore, chattyScore),
     stats: [
-      ["AI基礎スコア", `${aiBase.toFixed(1)} / 100`],
-      ["チャッピー構文", `${chattyScore.toFixed(1)} / 100`],
+      ["文体の規則性", `${aiBase.toFixed(1)} / 100`],
+      ["投稿文の特徴", `${chattyScore.toFixed(1)} / 100`],
       ["平均文長", `${avgSentence.toFixed(1)} 文字`],
       ["文長のばらつき", sentenceVar.toFixed(1)],
       ["語彙多様性", pct(uniq * 100)],
@@ -384,9 +395,9 @@ function analyzeCode(text){
   );
 
   const signals = [
-    {label:"行長の均一さ", value:pct(lineUniformity * 100), detail:"整いすぎるとAI生成っぽい", type: lineUniformity > 0.65 ? "bad" : lineUniformity > 0.4 ? "warn" : "good"},
+    {label:"行長の均一さ", value:pct(lineUniformity * 100), detail:"行の長さが一定に近い場合に上昇", type: lineUniformity > 0.65 ? "bad" : lineUniformity > 0.4 ? "warn" : "good"},
     {label:"重複行率", value:pct(duplicateLineRatio * 100), detail:"同じ構造が多いと上昇", type: duplicateLineRatio > 0.12 ? "bad" : duplicateLineRatio > 0.05 ? "warn" : "good"},
-    {label:"コメント密度", value:pct(commentDensity * 100), detail:"説明過多だとAIっぽく見えやすい", type: commentDensity > 0.18 ? "bad" : commentDensity > 0.08 ? "warn" : "good"},
+    {label:"コメント密度", value:pct(commentDensity * 100), detail:"コメントが多い場合に上昇", type: commentDensity > 0.18 ? "bad" : commentDensity > 0.08 ? "warn" : "good"},
     {label:"命名の汎用性", value:pct(clamp(genericRatio * 100, 0, 100)), detail:"result / data / tmp などが多いと上昇", type: genericRatio > 0.10 ? "bad" : genericRatio > 0.04 ? "warn" : "good"},
     {label:"キーワード密度", value:keywordDensity.toFixed(2), detail:"構文の偏りチェック", type: keywordDensity > 0.12 ? "warn" : "good"},
   ];
@@ -394,13 +405,13 @@ function analyzeCode(text){
   const tips = [];
   if(lineUniformity > 0.6) tips.push("処理を小さな関数に分け、行のリズムを少し変えると自然になります。");
   if(duplicateLineRatio > 0.08) tips.push("重複した処理は共通関数へまとめると、見た目もロジックもすっきりします。");
-  if(commentDensity > 0.12) tips.push("コメントは要点だけに絞ると、AIっぽい説明過多を避けやすくなります。");
+  if(commentDensity > 0.12) tips.push("コメントは要点だけに絞ると、説明が重複しないよう整理できます。");
   if(genericRatio > 0.08) tips.push("変数名を用途が伝わるものに変えると、汎用的な印象が弱まります。");
   if(avgLength < 32 && nonEmpty.length > 12) tips.push("短い行が続く場合は、数行をまとめると文脈に自然な流れが出ます。");
   if(tips.length === 0) tips.push("構造はかなり自然です。必要なら、命名・コメント・関数分割を少しだけ手で整えるとさらに良くなります。");
 
   const chips = [
-    score >= 70 ? {text:"AI生成寄り", cls:"bad"} : score >= 45 ? {text:"要確認", cls:"warn"} : {text:"手書き寄り", cls:"good"},
+    score >= 70 ? {text:"規則性が高め", cls:"bad"} : score >= 45 ? {text:"要確認", cls:"warn"} : {text:"ばらつきが多め", cls:"good"},
     {text:`行数 ${lines.length}`, cls:""},
     {text:`有効行 ${nonEmpty.length}`, cls:""},
   ];
@@ -425,8 +436,7 @@ function analyzeCode(text){
 function render(result){
   const score = Math.round(result.score);
   els.scoreNum.textContent = score;
-  els.scoreRing.style.background =
-    `conic-gradient(var(--accent) 0deg, var(--accent2) ${score * 3.6}deg, rgba(255,255,255,.08) ${score * 3.6}deg)`;
+  els.scoreTrack.style.width = `${score}%`;
 
   els.verdictTitle.textContent = result.verdict.title;
   els.verdictText.textContent = result.verdict.text;
@@ -455,11 +465,16 @@ function render(result){
 
 function analyze(){
   const text = els.input.value || "";
+  if(text.length > 500000){
+    els.verdictTitle.textContent = "入力が長すぎます";
+    els.verdictText.textContent = "500,000文字以内にしてください。";
+    return;
+  }
   if(!text.trim()){
     els.verdictTitle.textContent = "入力してください";
     els.verdictText.textContent = "文章かコードを貼り付けてから分析してください。";
-    els.scoreNum.textContent = "0";
-    els.scoreRing.style.background = `conic-gradient(var(--accent) 0deg, var(--accent2) 0deg, rgba(255,255,255,.08) 0deg)`;
+    els.scoreNum.textContent = "–";
+    els.scoreTrack.style.width = "0%";
     els.summaryChips.innerHTML = "";
     els.stats.innerHTML = "";
     els.signals.innerHTML = "";
@@ -481,10 +496,9 @@ function setMode(mode){
 function setTheme(theme){
   state.theme = theme;
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("ai-checker-theme", theme);
+  try { localStorage.setItem("utility-theme", theme); } catch {}
   const isDark = theme === "dark";
-  els.themeIcon.textContent = isDark ? "🌙" : "☀️";
-  els.themeText.textContent = isDark ? "Dark" : "Light";
+  els.themeText.textContent = isDark ? "ライト表示" : "ダーク表示";
 }
 
 function toggleTheme(){
@@ -500,34 +514,53 @@ els.themeToggle.addEventListener("click", toggleTheme);
 els.fileInput.addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
   if(!file) return;
-  const text = await file.text();
-  els.input.value = text;
-  analyze();
+  if(file.size > 1024 * 1024){
+    els.verdictTitle.textContent = "ファイルが大きすぎます";
+    els.verdictText.textContent = "1MB以下のファイルを選択してください。";
+    e.target.value = "";
+    return;
+  }
+  try {
+    const text = await file.text();
+    els.input.value = text;
+    analyze();
+  } catch {
+    els.verdictTitle.textContent = "読み込みに失敗しました";
+    els.verdictText.textContent = "テキストファイルを選択してください。";
+  }
 });
 
 ["dragenter","dragover"].forEach(evt => {
   els.dropZone.addEventListener(evt, (e) => {
     e.preventDefault();
     e.stopPropagation();
-    els.dropZone.style.borderColor = "rgba(124,240,198,.55)";
-    els.dropZone.style.background = "rgba(124,240,198,.10)";
+    els.dropZone.classList.add("dragover");
   });
 });
 ["dragleave","drop"].forEach(evt => {
   els.dropZone.addEventListener(evt, (e) => {
     e.preventDefault();
     e.stopPropagation();
-    els.dropZone.style.borderColor = "rgba(110,168,254,.30)";
-    els.dropZone.style.background = "rgba(110,168,254,.07)";
+    els.dropZone.classList.remove("dragover");
   });
 });
 
 els.dropZone.addEventListener("drop", async (e) => {
   const file = e.dataTransfer.files?.[0];
   if(!file) return;
-  const text = await file.text();
-  els.input.value = text;
-  analyze();
+  if(file.size > 1024 * 1024){
+    els.verdictTitle.textContent = "ファイルが大きすぎます";
+    els.verdictText.textContent = "1MB以下のファイルを選択してください。";
+    return;
+  }
+  try {
+    const text = await file.text();
+    els.input.value = text;
+    analyze();
+  } catch {
+    els.verdictTitle.textContent = "読み込みに失敗しました";
+    els.verdictText.textContent = "テキストファイルを選択してください。";
+  }
 });
 
 els.input.addEventListener("keydown", (e) => {
@@ -536,12 +569,6 @@ els.input.addEventListener("keydown", (e) => {
   }
 });
 
-const savedTheme = localStorage.getItem("ai-checker-theme");
-if(savedTheme === "light" || savedTheme === "dark"){
-  setTheme(savedTheme);
-} else {
-  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  setTheme(prefersDark ? "dark" : "light");
-}
+setTheme(state.theme);
 
 setMode("auto");
